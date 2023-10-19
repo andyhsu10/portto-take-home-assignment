@@ -1,0 +1,14 @@
+# logs
+/log
+
+# local env files
+.env*
+!.env.example
+
+# misc
+.DS_Store
+*.pem
+*.p12
+
+# ide setting
+/.idea
