@@ -1,9 +1,13 @@
 package controllers
 
 import (
+	"context"
+	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 
 	"eth-blockchain-service/internal/services"
 )
@@ -31,6 +35,20 @@ func (c *blockController) GetBlocks(ctx *gin.Context) {
 }
 
 func (c *blockController) GetSingleBlock(ctx *gin.Context) {
-	id := ctx.Param("id")
-	respond(ctx, nil, map[string]string{"id": id}, http.StatusOK)
+	id, err := strconv.Atoi(ctx.Param("id"))
+	if err != nil {
+		respond(ctx, nil, nil, http.StatusBadRequest)
+		return
+	}
+
+	block, err := c.blockSrv.GetSingleBlock(context.Background(), id)
+	if err != nil {
+		respond(ctx, nil, nil, http.StatusInternalServerError)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			respond(ctx, nil, nil, http.StatusNotFound)
+		}
+		return
+	}
+
+	respond(ctx, nil, block, http.StatusOK)
 }

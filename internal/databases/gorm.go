@@ -32,7 +32,7 @@ func newDB() (*gorm.DB, error) {
 
 	// Auto-migrate models
 	err = db.AutoMigrate(
-		&models.Block{}, &models.Transation{},
+		&models.Block{}, &models.Transaction{},
 	)
 	if err != nil {
 		return nil, err
