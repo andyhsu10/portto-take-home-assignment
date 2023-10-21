@@ -5,6 +5,7 @@ import (
 	"gorm.io/gorm"
 
 	"eth-blockchain-service/internal/configs"
+	"eth-blockchain-service/internal/models"
 )
 
 // set up a singleton instance of the database
@@ -29,7 +30,13 @@ func newDB() (*gorm.DB, error) {
 		return nil, err
 	}
 
-	// TODO: Auto-migrate models
+	// Auto-migrate models
+	err = db.AutoMigrate(
+		&models.Block{}, &models.Transation{},
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	return db, nil
 }
