@@ -1,20 +1,22 @@
 package services
 
-// import (
-// 	"gorm.io/gorm"
-// )
+import (
+	"gorm.io/gorm"
+
+	"eth-blockchain-service/internal/databases"
+)
 
 type TxnService interface{}
 
 type txnService struct {
-	// db   *gorm.DB
+	db *gorm.DB
 }
 
 func NewTxnService() (TxnService, error) {
-	// db, err := databases.GetDB()
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// return &blockService{db: db}, nil
-	return &txnService{}, nil
+	db, err := databases.GetDB()
+	if err != nil {
+		return nil, err
+	}
+
+	return &txnService{db: db}, nil
 }
