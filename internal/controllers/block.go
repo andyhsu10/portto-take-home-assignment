@@ -14,7 +14,7 @@ type BlockController interface {
 }
 
 type blockController struct {
-	block services.BlockService
+	blockSrv services.BlockService
 }
 
 func NewBlockController() (BlockController, error) {
@@ -22,13 +22,15 @@ func NewBlockController() (BlockController, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &blockController{block: srv.Block}, nil
+	return &blockController{blockSrv: srv.Block}, nil
 }
 
-func (controller *blockController) GetBlocks(ctx *gin.Context) {
-	respond(ctx, nil, map[string]string{"controller": "GetBlocks"}, http.StatusOK)
+func (c *blockController) GetBlocks(ctx *gin.Context) {
+	limitN := ctx.Query("n")
+	respond(ctx, nil, map[string]string{"n": limitN}, http.StatusOK)
 }
 
-func (controller *blockController) GetSingleBlock(ctx *gin.Context) {
-	respond(ctx, nil, map[string]string{"controller": "GetSingleBlock"}, http.StatusOK)
+func (c *blockController) GetSingleBlock(ctx *gin.Context) {
+	id := ctx.Param("id")
+	respond(ctx, nil, map[string]string{"id": id}, http.StatusOK)
 }

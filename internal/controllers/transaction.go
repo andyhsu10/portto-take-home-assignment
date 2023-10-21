@@ -13,7 +13,7 @@ type TxnController interface {
 }
 
 type txnController struct {
-	txn services.TxnService
+	txnSrv services.TxnService
 }
 
 func NewTxnController() (TxnController, error) {
@@ -22,9 +22,10 @@ func NewTxnController() (TxnController, error) {
 		return nil, err
 	}
 
-	return &txnController{txn: srv.Txn}, nil
+	return &txnController{txnSrv: srv.Txn}, nil
 }
 
-func (controller *txnController) GetSingleTransaction(ctx *gin.Context) {
-	respond(ctx, nil, map[string]string{"controller": "GetSingleTransaction"}, http.StatusOK)
+func (c *txnController) GetSingleTransaction(ctx *gin.Context) {
+	txHash := ctx.Param("txHash")
+	respond(ctx, nil, map[string]string{"txHash": txHash}, http.StatusOK)
 }
