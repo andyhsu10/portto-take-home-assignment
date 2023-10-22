@@ -5,14 +5,11 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/ethclient"
-
-	"eth-blockchain-service/internal/configs"
+	"eth-blockchain-service/internal/ethclient"
 )
 
 func Run() {
-	conf := configs.GetConfig()
-	cl, err := ethclient.Dial(conf.RpcList[0])
+	cl, err := ethclient.GetClient()
 	fmt.Println("ethclient", cl, err)
 
 	ctx := context.Background()
