@@ -18,7 +18,7 @@ var configInstance *Config
 // Config object
 type Config struct {
 	Database    *Database
-	Env         string `env:"ENV"`
+	Env         string
 	MaxN        int
 	MaxRoutines int
 	RpcList     []string
