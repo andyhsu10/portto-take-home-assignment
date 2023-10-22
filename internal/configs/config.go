@@ -3,6 +3,7 @@ package configs
 import (
 	"log"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/joho/godotenv"
@@ -16,9 +17,12 @@ var configInstance *Config
 
 // Config object
 type Config struct {
-	Database *Database
-	Env      string `env:"ENV"`
-	Server   *Server
+	Database    *Database
+	Env         string `env:"ENV"`
+	MaxN        int
+	MaxRoutines int
+	RpcList     []string
+	Server      *Server
 }
 
 type Database struct {
@@ -45,11 +49,24 @@ func newConfig() (*Config, error) {
 		log.Println("no .env file")
 	}
 
+	maxN, err := strconv.Atoi(os.Getenv("MAX_N"))
+	if err != nil || maxN <= 0 {
+		maxN = 10000
+	}
+
+	maxRoutines, err := strconv.Atoi(os.Getenv("MAX_ROUTINES"))
+	if err != nil || maxRoutines <= 0 {
+		maxRoutines = 5
+	}
+
 	return &Config{
 		Database: &Database{
 			URL: os.Getenv("DB_URL"),
 		},
-		Env: os.Getenv("ENV"),
+		Env:         os.Getenv("ENV"),
+		MaxN:        maxN,
+		MaxRoutines: maxRoutines,
+		RpcList:     strings.Split(os.Getenv("RPC_LIST"), ","),
 		Server: &Server{
 			Port: os.Getenv("SERVER_PORT"),
 			Cors: strings.Split(os.Getenv("CORS_ORIGIN_WHITELIST"), ","),
