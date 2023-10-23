@@ -37,10 +37,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/models.Block"
-                            }
+                            "$ref": "#/definitions/services.BlocksResponse"
                         }
                     }
                 }
@@ -68,7 +65,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/services.BlockResponse"
+                            "$ref": "#/definitions/services.SingleBlockResponse"
                         }
                     }
                 }
@@ -118,42 +115,21 @@ const docTemplate = `{
                 },
                 "parent_hash": {
                     "type": "string"
-                },
-                "transactions": {
+                }
+            }
+        },
+        "services.BlocksResponse": {
+            "type": "object",
+            "properties": {
+                "blocks": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.Transaction"
+                        "$ref": "#/definitions/models.Block"
                     }
                 }
             }
         },
-        "models.Transaction": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "type": "string"
-                },
-                "from": {
-                    "type": "string"
-                },
-                "logs": {
-                    "type": "string"
-                },
-                "nonce": {
-                    "type": "integer"
-                },
-                "to": {
-                    "type": "string"
-                },
-                "tx_hash": {
-                    "type": "string"
-                },
-                "value": {
-                    "type": "string"
-                }
-            }
-        },
-        "services.BlockResponse": {
+        "services.SingleBlockResponse": {
             "type": "object",
             "properties": {
                 "block_hash": {

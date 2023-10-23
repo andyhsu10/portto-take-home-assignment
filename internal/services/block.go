@@ -11,8 +11,8 @@ import (
 )
 
 type BlockService interface {
-	GetSingleBlock(ctx context.Context, blockNum int) (*BlockResponse, error)
-	GetLatestNBlocks(ctx context.Context, num int) ([]*models.Block, error)
+	GetSingleBlock(ctx context.Context, blockNum int) (*SingleBlockResponse, error)
+	GetLatestNBlocks(ctx context.Context, num int) (*BlocksResponse, error)
 	GetLatestNBlockNumbers(ctx context.Context, num int) (*[]int, error)
 	CreateBlock(ctx context.Context, block models.Block) (*models.Block, error)
 }
@@ -30,7 +30,7 @@ func NewBlockService() (BlockService, error) {
 	return &blockService{db: db}, nil
 }
 
-func (srv *blockService) GetSingleBlock(ctx context.Context, blockNum int) (*BlockResponse, error) {
+func (srv *blockService) GetSingleBlock(ctx context.Context, blockNum int) (*SingleBlockResponse, error) {
 	block := &models.Block{}
 	res := srv.db.
 		Where("number = ?", blockNum).
@@ -48,22 +48,26 @@ func (srv *blockService) GetSingleBlock(ctx context.Context, blockNum int) (*Blo
 		txids[i] = t.Hash
 	}
 
-	response := &BlockResponse{
+	response := &SingleBlockResponse{
 		Block:        *block,
 		Transactions: txids,
 	}
 	return response, nil
 }
 
-func (srv *blockService) GetLatestNBlocks(ctx context.Context, num int) ([]*models.Block, error) {
-	blocks := make([]*models.Block, 0)
+func (srv *blockService) GetLatestNBlocks(ctx context.Context, num int) (*BlocksResponse, error) {
+	blocks := make([]models.Block, 0)
 	res := srv.db.Limit(num).Find(&blocks)
 
 	if res.Error != nil {
 		return nil, res.Error
 	}
 
-	return blocks, nil
+	response := &BlocksResponse{
+		Blocks: blocks,
+	}
+
+	return response, nil
 }
 
 func (srv *blockService) GetLatestNBlockNumbers(ctx context.Context, num int) (*[]int, error) {
@@ -90,7 +94,11 @@ func (srv *blockService) CreateBlock(ctx context.Context, block models.Block) (*
 	return &block, nil
 }
 
-type BlockResponse struct {
+type BlocksResponse struct {
+	Blocks []models.Block `json:"blocks"`
+}
+
+type SingleBlockResponse struct {
 	models.Block
 	Transactions []string `json:"transactions"`
 }

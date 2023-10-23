@@ -13,7 +13,7 @@ type Block struct {
 	Hash         string        `json:"block_hash"`
 	Time         uint64        `json:"block_time"`
 	ParentHash   string        `json:"parent_hash"`
-	Transactions []Transaction `json:"transactions,omitempty" gorm:"foreignKey:BlockNumber;references:Number"`
+	Transactions []Transaction `json:"-" gorm:"foreignKey:BlockNumber;references:Number"`
 }
 
 type Transaction struct {
