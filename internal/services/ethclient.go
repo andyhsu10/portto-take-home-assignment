@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	goethclient "github.com/ethereum/go-ethereum/ethclient"
 
@@ -14,6 +15,7 @@ import (
 
 type EthClientService interface {
 	GetBlock(ctx context.Context, blockNum int) (*models.Block, []*models.Transaction, error)
+	GetTxnLogs(ctx context.Context, hash string) ([]*TxnReceiptLog, error)
 }
 
 type ethClientService struct {
@@ -62,4 +64,27 @@ func (srv *ethClientService) GetBlock(ctx context.Context, blockNum int) (*model
 	}
 
 	return block, transactions, nil
+}
+
+func (srv *ethClientService) GetTxnLogs(ctx context.Context, hash string) ([]*TxnReceiptLog, error) {
+	h := common.HexToHash(hash)
+	receipt, err := srv.client.TransactionReceipt(ctx, h)
+	if err != nil {
+		return nil, err
+	}
+
+	logs := make([]*TxnReceiptLog, len(receipt.Logs))
+	for i, l := range receipt.Logs {
+		logs[i] = &TxnReceiptLog{
+			Index: int(l.Index),
+			Data:  "0x" + hex.EncodeToString(l.Data),
+		}
+	}
+
+	return logs, nil
+}
+
+type TxnReceiptLog struct {
+	Index int    `json:"index"`
+	Data  string `json:"data"`
 }
