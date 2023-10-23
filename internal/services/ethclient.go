@@ -14,7 +14,8 @@ import (
 )
 
 type EthClientService interface {
-	GetBlock(ctx context.Context, blockNum int) (*models.Block, []*models.Transaction, error)
+	GetRecentBlockNum(ctx context.Context) (*uint64, error)
+	GetBlock(ctx context.Context, blockNum uint64) (*models.Block, *[]models.Transaction, error)
 	GetTxnLogs(ctx context.Context, hash string) ([]*TxnReceiptLog, error)
 }
 
@@ -31,7 +32,16 @@ func NewEthClientService() (EthClientService, error) {
 	return &ethClientService{client: client}, nil
 }
 
-func (srv *ethClientService) GetBlock(ctx context.Context, blockNum int) (*models.Block, []*models.Transaction, error) {
+func (srv *ethClientService) GetRecentBlockNum(ctx context.Context) (*uint64, error) {
+	number, err := srv.client.BlockNumber(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &number, nil
+}
+
+func (srv *ethClientService) GetBlock(ctx context.Context, blockNum uint64) (*models.Block, *[]models.Transaction, error) {
 	b, err := srv.client.BlockByNumber(ctx, big.NewInt(int64(blockNum)))
 	if err != nil {
 		return nil, nil, err
@@ -40,30 +50,36 @@ func (srv *ethClientService) GetBlock(ctx context.Context, blockNum int) (*model
 	block := &models.Block{
 		Number:     blockNum,
 		Hash:       b.Hash().String(),
-		Time:       int(b.Time()),
+		Time:       b.Time(),
 		ParentHash: b.ParentHash().String(),
 	}
 
-	transactions := make([]*models.Transaction, len(b.Transactions()))
+	transactions := make([]models.Transaction, len(b.Transactions()))
 	for i, t := range b.Transactions() {
 		from, _ := types.Sender(types.LatestSignerForChainID(t.ChainId()), t)
+
+		to := ""
+		if t.To() != nil {
+			to = t.To().String()
+		}
+
 		data := hex.EncodeToString(t.Data())
 		if len(data) != 0 {
 			data = "0x" + data
 		}
 
-		transactions[i] = &models.Transaction{
+		transactions[i] = models.Transaction{
 			Hash:        t.Hash().String(),
 			From:        from.String(),
-			To:          t.To().String(),
-			Nonce:       int(t.Nonce()),
+			To:          to,
+			Nonce:       t.Nonce(),
 			Data:        data,
 			Value:       t.Value().String(),
 			BlockNumber: blockNum,
 		}
 	}
 
-	return block, transactions, nil
+	return block, &transactions, nil
 }
 
 func (srv *ethClientService) GetTxnLogs(ctx context.Context, hash string) ([]*TxnReceiptLog, error) {
@@ -76,7 +92,7 @@ func (srv *ethClientService) GetTxnLogs(ctx context.Context, hash string) ([]*Tx
 	logs := make([]*TxnReceiptLog, len(receipt.Logs))
 	for i, l := range receipt.Logs {
 		logs[i] = &TxnReceiptLog{
-			Index: int(l.Index),
+			Index: l.Index,
 			Data:  "0x" + hex.EncodeToString(l.Data),
 		}
 	}
@@ -85,6 +101,6 @@ func (srv *ethClientService) GetTxnLogs(ctx context.Context, hash string) ([]*Tx
 }
 
 type TxnReceiptLog struct {
-	Index int    `json:"index"`
+	Index uint   `json:"index"`
 	Data  string `json:"data"`
 }

@@ -2,42 +2,110 @@ package app
 
 import (
 	"context"
-	"encoding/hex"
-	"encoding/json"
-	"fmt"
-	"math/big"
+	"log"
+	"sync"
+	"time"
 
-	"eth-blockchain-service/internal/ethclient"
+	"eth-blockchain-service/internal/configs"
+	"eth-blockchain-service/internal/services"
 )
 
-type ReceiptLog struct {
-	Index int    `json:"index"`
-	Data  string `json:"data"`
+var recentBlockNum *uint64
+
+func getRecentBlockNum() (num *uint64, err error) {
+	if recentBlockNum == nil {
+		ethClientSrv, err := services.NewEthClientService()
+		if err != nil {
+			return nil, err
+		}
+
+		ctx := context.Background()
+		num, err := ethClientSrv.GetRecentBlockNum(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		recentBlockNum = num
+	}
+	return recentBlockNum, nil
 }
 
-func Run() {
-	cl, err := ethclient.GetClient()
-	fmt.Println("ethclient", cl, err)
+func Run() error {
+	blockSrv, err := services.NewBlockService()
+	if err != nil {
+		log.Fatalln("Failed to create new block service", err)
+	}
 
-	ctx := context.Background()
-	num, err := cl.BlockNumber(ctx)
-	fmt.Println("BlockNumber", num, err)
+	txnSrv, err := services.NewTxnService()
+	if err != nil {
+		log.Fatalln("Failed to create new txn service", err)
+	}
 
-	block, err := cl.BlockByNumber(ctx, big.NewInt(int64(num)))
-	fmt.Println("Block", block, err)
+	ethClientSrv, err := services.NewEthClientService()
+	if err != nil {
+		log.Fatalln("Failed to create new ETH client service", err)
+	}
 
-	for _, t := range block.Transactions() {
-		hash := t.Hash()
-		receipt, _ := cl.TransactionReceipt(ctx, hash)
-		logs := make([]*ReceiptLog, len(receipt.Logs))
-		for i, l := range receipt.Logs {
-			logs[i] = &ReceiptLog{
-				Index: int(l.Index),
-				Data:  "0x" + hex.EncodeToString(l.Data),
+	wg := &sync.WaitGroup{}
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		num, err := getRecentBlockNum()
+		if err != nil {
+			log.Fatalln("Failed to get recent block number", err)
+		}
+
+		ctx := context.Background()
+		blocks := makeRange(int(*num)-configs.GetConfig().MaxN, int(*num))
+		blocksInDb, err := blockSrv.GetLatestNBlock(ctx, configs.GetConfig().MaxN)
+		if err != nil {
+			log.Fatalln("Failed to get latest block numbers from DB", err)
+		}
+
+		blocksInDbMap := make(map[int]bool)
+		for _, b := range *blocksInDb {
+			blocksInDbMap[b] = true
+		}
+
+		const rateLimit = 10
+		ticker := time.NewTicker(time.Second / rateLimit)
+		for _, b := range blocks {
+			if _, ok := blocksInDbMap[b]; !ok {
+				block, txns, err := ethClientSrv.GetBlock(ctx, uint64(b))
+				if err != nil {
+					log.Println("Failed to index the block:", b)
+					continue
+				}
+
+				_, err = blockSrv.CreateBlock(ctx, *block)
+				if err != nil {
+					log.Println("Failed to create the block:", b)
+					continue
+				}
+
+				_, err = txnSrv.BatchCreateTxns(ctx, *txns)
+				if err != nil {
+					log.Println("Failed to create the block's transactions:", b)
+					continue
+				}
+
+				log.Println("Successfully index the block:", b)
+
+				<-ticker.C
 			}
 		}
-		jsonLogs, _ := json.Marshal(logs)
+	}()
 
-		fmt.Println("TXID:", hash, string(jsonLogs))
+	wg.Wait()
+
+	return nil
+}
+
+func makeRange(min, max int) []int {
+	a := make([]int, max-min+1)
+	for i := range a {
+		a[i] = max - i
 	}
+	return a
 }
