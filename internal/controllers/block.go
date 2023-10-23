@@ -29,6 +29,13 @@ func NewBlockController() (BlockController, error) {
 	return &blockController{blockSrv: srv.Block}, nil
 }
 
+// GetBlocks godoc
+// @Summary Get latest N blocks (without txn hash)
+// @Tags Block
+// @Param n query number true "The number of blocks to get"
+// @produce application/json
+// @Router /blocks [get]
+// @Success 200 {array} models.Block
 func (c *blockController) GetBlocks(ctx *gin.Context) {
 	n, err := strconv.Atoi(ctx.Query("n"))
 	if err != nil {
@@ -49,6 +56,13 @@ func (c *blockController) GetBlocks(ctx *gin.Context) {
 	respond(ctx, nil, blocks, http.StatusOK)
 }
 
+// GetSingleBlock godoc
+// @Summary Get block information from a block number (with txn hash)
+// @Tags Block
+// @Param id path string true "The block number"
+// @produce application/json
+// @Router /blocks/{id} [get]
+// @Success 200 {object} services.BlockResponse
 func (c *blockController) GetSingleBlock(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {

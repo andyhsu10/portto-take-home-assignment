@@ -1,0 +1,136 @@
+definitions:
+  models.Block:
+    properties:
+      block_hash:
+        type: string
+      block_num:
+        type: integer
+      block_time:
+        type: integer
+      parent_hash:
+        type: string
+      transactions:
+        items:
+          $ref: '#/definitions/models.Transaction'
+        type: array
+    type: object
+  models.Transaction:
+    properties:
+      data:
+        type: string
+      from:
+        type: string
+      logs:
+        type: string
+      nonce:
+        type: integer
+      to:
+        type: string
+      tx_hash:
+        type: string
+      value:
+        type: string
+    type: object
+  services.BlockResponse:
+    properties:
+      block_hash:
+        type: string
+      block_num:
+        type: integer
+      block_time:
+        type: integer
+      parent_hash:
+        type: string
+      transactions:
+        items:
+          type: string
+        type: array
+    type: object
+  services.TxnReceiptLog:
+    properties:
+      data:
+        type: string
+      index:
+        type: integer
+    type: object
+  services.TxnResponse:
+    properties:
+      data:
+        type: string
+      from:
+        type: string
+      logs:
+        items:
+          $ref: '#/definitions/services.TxnReceiptLog'
+        type: array
+      nonce:
+        type: integer
+      to:
+        type: string
+      tx_hash:
+        type: string
+      value:
+        type: string
+    type: object
+info:
+  contact: {}
+  title: Ethereum Blockchain API Service
+  version: "1.0"
+paths:
+  /blocks:
+    get:
+      parameters:
+      - description: The number of blocks to get
+        in: query
+        name: "n"
+        required: true
+        type: number
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Block'
+            type: array
+      summary: Get latest N blocks (without txn hash)
+      tags:
+      - Block
+  /blocks/{id}:
+    get:
+      parameters:
+      - description: The block number
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/services.BlockResponse'
+      summary: Get block information from a block number (with txn hash)
+      tags:
+      - Block
+  /transaction/{txHash}:
+    get:
+      parameters:
+      - description: The transaction hash
+        in: path
+        name: txHash
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/services.TxnResponse'
+      summary: Get transaction information from a transaction hash
+      tags:
+      - Transaction
+swagger: "2.0"

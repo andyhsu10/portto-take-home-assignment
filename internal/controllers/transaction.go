@@ -27,6 +27,13 @@ func NewTxnController() (TxnController, error) {
 	return &txnController{txnSrv: srv.Txn}, nil
 }
 
+// GetSingleTxn godoc
+// @Summary Get transaction information from a transaction hash
+// @Tags Transaction
+// @Param txHash path string true "The transaction hash"
+// @produce application/json
+// @Router /transaction/{txHash} [get]
+// @Success 200 {object} services.TxnResponse
 func (c *txnController) GetSingleTxn(ctx *gin.Context) {
 	txHash := ctx.Param("txHash")
 	txn, err := c.txnSrv.GetSingleTxn(ctx, txHash)

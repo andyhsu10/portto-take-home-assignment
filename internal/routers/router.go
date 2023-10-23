@@ -2,6 +2,8 @@ package routers
 
 import (
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"eth-blockchain-service/internal/middlewares"
 )
@@ -35,6 +37,7 @@ func newRouter() (*gin.Engine, error) {
 			"data": "Hello World!",
 		})
 	})
+	engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	err = InitBlockRouter(engine, "blocks")
 	if err != nil {
