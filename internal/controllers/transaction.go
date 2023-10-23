@@ -1,15 +1,17 @@
 package controllers
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 
 	"eth-blockchain-service/internal/services"
 )
 
 type TxnController interface {
-	GetSingleTransaction(ctx *gin.Context)
+	GetSingleTxn(ctx *gin.Context)
 }
 
 type txnController struct {
@@ -25,7 +27,17 @@ func NewTxnController() (TxnController, error) {
 	return &txnController{txnSrv: srv.Txn}, nil
 }
 
-func (c *txnController) GetSingleTransaction(ctx *gin.Context) {
+func (c *txnController) GetSingleTxn(ctx *gin.Context) {
 	txHash := ctx.Param("txHash")
-	respond(ctx, nil, map[string]string{"txHash": txHash}, http.StatusOK)
+	txn, err := c.txnSrv.GetSingleTxn(ctx, txHash)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			respond(ctx, nil, nil, http.StatusNotFound)
+			return
+		}
+		respond(ctx, nil, nil, http.StatusInternalServerError)
+		return
+	}
+
+	respond(ctx, nil, txn, http.StatusOK)
 }

@@ -16,7 +16,7 @@ import (
 type EthClientService interface {
 	GetRecentBlockNum(ctx context.Context) (*uint64, error)
 	GetBlock(ctx context.Context, blockNum uint64) (*models.Block, *[]models.Transaction, error)
-	GetTxnLogs(ctx context.Context, hash string) ([]*TxnReceiptLog, error)
+	GetTxnLogs(ctx context.Context, hash string) (*[]TxnReceiptLog, error)
 }
 
 type ethClientService struct {
@@ -82,22 +82,22 @@ func (srv *ethClientService) GetBlock(ctx context.Context, blockNum uint64) (*mo
 	return block, &transactions, nil
 }
 
-func (srv *ethClientService) GetTxnLogs(ctx context.Context, hash string) ([]*TxnReceiptLog, error) {
+func (srv *ethClientService) GetTxnLogs(ctx context.Context, hash string) (*[]TxnReceiptLog, error) {
 	h := common.HexToHash(hash)
 	receipt, err := srv.client.TransactionReceipt(ctx, h)
 	if err != nil {
 		return nil, err
 	}
 
-	logs := make([]*TxnReceiptLog, len(receipt.Logs))
+	logs := make([]TxnReceiptLog, len(receipt.Logs))
 	for i, l := range receipt.Logs {
-		logs[i] = &TxnReceiptLog{
+		logs[i] = TxnReceiptLog{
 			Index: l.Index,
 			Data:  "0x" + hex.EncodeToString(l.Data),
 		}
 	}
 
-	return logs, nil
+	return &logs, nil
 }
 
 type TxnReceiptLog struct {

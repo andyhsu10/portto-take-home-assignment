@@ -13,6 +13,6 @@ func InitTxnRouter(engine *gin.Engine, path string) error {
 	}
 	group := engine.Group(path)
 
-	group.GET("/:txHash", ctl.Txn.GetSingleTransaction)
+	group.GET("/:txHash", ctl.Txn.GetSingleTxn)
 	return nil
 }

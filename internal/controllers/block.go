@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"strconv"
@@ -57,7 +56,7 @@ func (c *blockController) GetSingleBlock(ctx *gin.Context) {
 		return
 	}
 
-	block, err := c.blockSrv.GetSingleBlock(context.Background(), id)
+	block, err := c.blockSrv.GetSingleBlock(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			respond(ctx, nil, nil, http.StatusNotFound)
