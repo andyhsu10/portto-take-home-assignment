@@ -11,8 +11,9 @@ import (
 )
 
 type BlockService interface {
-	GetSingleBlock(ctx context.Context, blockNum int) (*models.Block, error)
-	GetLatestNBlock(ctx context.Context, num int) (*[]int, error)
+	GetSingleBlock(ctx context.Context, blockNum int) (*BlockResponse, error)
+	GetLatestNBlocks(ctx context.Context, num int) ([]*models.Block, error)
+	GetLatestNBlockNumbers(ctx context.Context, num int) (*[]int, error)
 	CreateBlock(ctx context.Context, block models.Block) (*models.Block, error)
 }
 
@@ -29,20 +30,43 @@ func NewBlockService() (BlockService, error) {
 	return &blockService{db: db}, nil
 }
 
-func (srv *blockService) GetSingleBlock(ctx context.Context, blockNum int) (*models.Block, error) {
+func (srv *blockService) GetSingleBlock(ctx context.Context, blockNum int) (*BlockResponse, error) {
 	block := &models.Block{}
 	res := srv.db.
 		Where("number = ?", blockNum).
-		Preload("Transactions").
+		Preload("Transactions", func(db *gorm.DB) *gorm.DB {
+			return db.Select("Hash", "BlockNumber")
+		}).
 		First(&block)
 
 	if res.Error != nil {
 		return nil, res.Error
 	}
-	return block, nil
+
+	txids := make([]string, len(block.Transactions))
+	for i, t := range block.Transactions {
+		txids[i] = t.Hash
+	}
+
+	response := &BlockResponse{
+		Block:        *block,
+		Transactions: txids,
+	}
+	return response, nil
 }
 
-func (srv *blockService) GetLatestNBlock(ctx context.Context, num int) (*[]int, error) {
+func (srv *blockService) GetLatestNBlocks(ctx context.Context, num int) ([]*models.Block, error) {
+	blocks := make([]*models.Block, 0)
+	res := srv.db.Limit(num).Find(&blocks)
+
+	if res.Error != nil {
+		return nil, res.Error
+	}
+
+	return blocks, nil
+}
+
+func (srv *blockService) GetLatestNBlockNumbers(ctx context.Context, num int) (*[]int, error) {
 	blocks := make([]*models.Block, 0)
 	res := srv.db.Select("Number").Limit(num).Find(&blocks)
 	if res.Error != nil {
@@ -64,4 +88,9 @@ func (srv *blockService) CreateBlock(ctx context.Context, block models.Block) (*
 	}
 
 	return &block, nil
+}
+
+type BlockResponse struct {
+	models.Block
+	Transactions []string `json:"transactions"`
 }

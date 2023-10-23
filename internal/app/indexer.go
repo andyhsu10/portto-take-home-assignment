@@ -58,7 +58,7 @@ func Run() error {
 
 		ctx := context.Background()
 		blocks := makeRange(int(*num)-configs.GetConfig().MaxN, int(*num))
-		blocksInDb, err := blockSrv.GetLatestNBlock(ctx, configs.GetConfig().MaxN)
+		blocksInDb, err := blockSrv.GetLatestNBlockNumbers(ctx, configs.GetConfig().MaxN)
 		if err != nil {
 			log.Fatalln("Failed to get latest block numbers from DB", err)
 		}

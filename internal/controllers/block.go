@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
+	"eth-blockchain-service/internal/configs"
 	"eth-blockchain-service/internal/services"
 )
 
@@ -30,8 +31,23 @@ func NewBlockController() (BlockController, error) {
 }
 
 func (c *blockController) GetBlocks(ctx *gin.Context) {
-	limitN := ctx.Query("n")
-	respond(ctx, nil, map[string]string{"n": limitN}, http.StatusOK)
+	n, err := strconv.Atoi(ctx.Query("n"))
+	if err != nil {
+		respond(ctx, nil, nil, http.StatusBadRequest)
+		return
+	}
+
+	if n > configs.GetConfig().MaxN {
+		n = configs.GetConfig().MaxN
+	}
+
+	blocks, err := c.blockSrv.GetLatestNBlocks(ctx, n)
+	if err != nil {
+		respond(ctx, nil, nil, http.StatusInternalServerError)
+		return
+	}
+
+	respond(ctx, nil, blocks, http.StatusOK)
 }
 
 func (c *blockController) GetSingleBlock(ctx *gin.Context) {
@@ -43,10 +59,11 @@ func (c *blockController) GetSingleBlock(ctx *gin.Context) {
 
 	block, err := c.blockSrv.GetSingleBlock(context.Background(), id)
 	if err != nil {
-		respond(ctx, nil, nil, http.StatusInternalServerError)
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			respond(ctx, nil, nil, http.StatusNotFound)
+			return
 		}
+		respond(ctx, nil, nil, http.StatusInternalServerError)
 		return
 	}
 
