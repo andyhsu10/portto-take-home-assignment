@@ -8,8 +8,6 @@ import (
 	"math/big"
 
 	"eth-blockchain-service/internal/ethclient"
-
-	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type ReceiptLog struct {
@@ -27,18 +25,10 @@ func Run() {
 
 	block, err := cl.BlockByNumber(ctx, big.NewInt(int64(num)))
 	fmt.Println("Block", block, err)
-	hash, time, parentHash, transactions := block.Hash(), block.Time(), block.ParentHash(), block.Transactions()
-	fmt.Println("BlockInfo", hash, time, parentHash, transactions)
 
-	for _, t := range transactions {
+	for _, t := range block.Transactions() {
 		hash := t.Hash()
 		receipt, _ := cl.TransactionReceipt(ctx, hash)
-		from, _ := types.Sender(types.LatestSignerForChainID(t.ChainId()), t)
-		to := t.To()
-		nonce := t.Nonce()
-		// FIXME: data might be empty
-		data := "0x" + hex.EncodeToString(t.Data())
-		value := t.Value()
 		logs := make([]*ReceiptLog, len(receipt.Logs))
 		for i, l := range receipt.Logs {
 			logs[i] = &ReceiptLog{
@@ -48,6 +38,6 @@ func Run() {
 		}
 		jsonLogs, _ := json.Marshal(logs)
 
-		fmt.Println("TXID:", hash, from.String(), to.String(), nonce, data, value, string(jsonLogs))
+		fmt.Println("TXID:", hash, string(jsonLogs))
 	}
 }
