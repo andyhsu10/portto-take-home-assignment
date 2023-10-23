@@ -49,6 +49,8 @@ func Run() error {
 	wg := &sync.WaitGroup{}
 
 	wg.Add(1)
+
+	// indexing past blocks
 	go func() {
 		defer wg.Done()
 		num, err := getRecentBlockNum()
@@ -90,9 +92,55 @@ func Run() error {
 					continue
 				}
 
-				log.Println("Successfully index the block:", b)
+				log.Println("Successfully index the past block:", b)
 
 				<-ticker.C
+			}
+		}
+	}()
+
+	// indexing future blocks
+	go func() {
+		defer wg.Done()
+
+		ticker := time.NewTicker(time.Second * 5)
+		for {
+			<-ticker.C
+
+			ctx := context.Background()
+			num, err := ethClientSrv.GetRecentBlockNum(ctx)
+			if err != nil {
+				continue
+			}
+
+			if recentBlockNum != nil && *num > *recentBlockNum {
+				blocks := makeRange(int(*recentBlockNum)+1, int(*num))
+				const rateLimit = 10
+				ticker := time.NewTicker(time.Second / rateLimit)
+				for _, b := range blocks {
+					block, txns, err := ethClientSrv.GetBlock(ctx, uint64(b))
+					if err != nil {
+						log.Println("Failed to index the block:", b)
+						continue
+					}
+
+					_, err = blockSrv.CreateBlock(ctx, *block)
+					if err != nil {
+						log.Println("Failed to create the block:", b)
+						continue
+					}
+
+					_, err = txnSrv.BatchCreateTxns(ctx, *txns)
+					if err != nil {
+						log.Println("Failed to create the block's transactions:", b)
+						continue
+					}
+
+					recentBlockNum = num
+					log.Println("Successfully index the new block:", b)
+
+					<-ticker.C
+				}
 			}
 		}
 	}()
