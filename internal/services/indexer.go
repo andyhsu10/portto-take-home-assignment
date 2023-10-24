@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"errors"
-	"eth-blockchain-service/internal/configs"
 	"log"
 	"time"
 )
@@ -61,28 +60,40 @@ func (srv *indexerService) IndexOldBlocks(ctx context.Context, begin int, block 
 		return errors.New("begin number must be greater than zero or it is greater than the recent block number")
 	}
 
-	blocks := srv.makeRange(begin, int(srv.RecentBlockNum))
-	blocksInDb, err := srv.blockSrv.GetLatestNBlockNumbers(ctx, configs.GetConfig().MaxN)
-	if err != nil {
-		log.Fatalln("Failed to get latest block numbers from DB", err)
-		return err
-	}
+	count := int(srv.RecentBlockNum) - begin + 1
+	chunkSize := 1000
+	iter := count/chunkSize + 1
+	for i := 0; i < iter; i++ {
+		start := begin + i*chunkSize
+		var blocks []int
+		if i < iter-1 {
+			blocks = srv.makeRange(start, start+chunkSize-1)
+		} else {
+			blocks = srv.makeRange(start, int(srv.RecentBlockNum))
+		}
 
-	blocksInDbMap := make(map[int]bool)
-	for _, b := range *blocksInDb {
-		blocksInDbMap[b] = true
-	}
+		blocksInDb, err := srv.blockSrv.GetBlockNumbers(ctx, &blocks)
+		if err != nil {
+			log.Fatalln("Failed to get latest block numbers from DB", err)
+			return err
+		}
 
-	const rateLimit = 10
-	ticker := time.NewTicker(time.Second / rateLimit)
-	for _, b := range blocks {
-		if _, ok := blocksInDbMap[b]; !ok {
-			err := srv.IndexOneBlock(ctx, uint64(b))
-			if err == nil {
-				block <- b
+		blocksInDbMap := make(map[int]bool)
+		for _, b := range *blocksInDb {
+			blocksInDbMap[b] = true
+		}
+
+		const rateLimit = 10
+		ticker := time.NewTicker(time.Second / rateLimit)
+		for _, b := range blocks {
+			if _, ok := blocksInDbMap[b]; !ok {
+				err := srv.IndexOneBlock(ctx, uint64(b))
+				if err == nil {
+					block <- b
+				}
+
+				<-ticker.C
 			}
-
-			<-ticker.C
 		}
 	}
 

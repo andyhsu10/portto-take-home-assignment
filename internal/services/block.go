@@ -13,7 +13,7 @@ import (
 type BlockService interface {
 	GetSingleBlock(ctx context.Context, blockNum int) (*SingleBlockResponse, error)
 	GetLatestNBlocks(ctx context.Context, num int) (*BlocksResponse, error)
-	GetLatestNBlockNumbers(ctx context.Context, num int) (*[]int, error)
+	GetBlockNumbers(ctx context.Context, nums *[]int) (*[]int, error)
 	CreateBlock(ctx context.Context, block models.Block) (*models.Block, error)
 }
 
@@ -70,19 +70,19 @@ func (srv *blockService) GetLatestNBlocks(ctx context.Context, num int) (*Blocks
 	return response, nil
 }
 
-func (srv *blockService) GetLatestNBlockNumbers(ctx context.Context, num int) (*[]int, error) {
+func (srv *blockService) GetBlockNumbers(ctx context.Context, nums *[]int) (*[]int, error) {
 	blocks := make([]*models.Block, 0)
-	res := srv.db.Select("Number").Limit(num).Find(&blocks)
+	res := srv.db.Where("number IN ?", *nums).Select("Number").Find(&blocks)
 	if res.Error != nil {
 		return nil, res.Error
 	}
 
-	nums := make([]int, len(blocks))
+	result := make([]int, len(blocks))
 	for i, b := range blocks {
-		nums[i] = int(b.Number)
+		result[i] = int(b.Number)
 	}
 
-	return &nums, nil
+	return &result, nil
 }
 
 func (srv *blockService) CreateBlock(ctx context.Context, block models.Block) (*models.Block, error) {
