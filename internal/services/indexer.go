@@ -3,9 +3,10 @@ package services
 import (
 	"context"
 	"errors"
-	"eth-blockchain-service/internal/configs"
 	"log"
 	"time"
+
+	"eth-blockchain-service/internal/configs"
 )
 
 type IndexerService interface {

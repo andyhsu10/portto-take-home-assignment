@@ -25,7 +25,17 @@ func Run() error {
 	// indexing old blocks
 	go func() {
 		defer wg.Done()
-		indexSrv.IndexOldBlocks(ctx, configs.GetConfig().StartIndexBlockNumber, oldBlockNum)
+		begin := configs.GetConfig().StartIndexBlockNumber
+		if begin <= 0 {
+			ethClientSrv, err := services.NewEthClientService()
+			if err == nil {
+				number, err := ethClientSrv.GetRecentBlockNum(ctx)
+				if err == nil {
+					begin = int(number) - 10000
+				}
+			}
+		}
+		indexSrv.IndexOldBlocks(ctx, begin, oldBlockNum)
 	}()
 
 	// indexing future new blocks
