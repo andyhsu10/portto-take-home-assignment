@@ -37,9 +37,10 @@
 1. API service
 
    - [GET] /blocks?limit=n (without transaction hash)
-     Description: Returns the latest n blocks from the DB
-     Example response:
+
      ```
+     // Returns the latest n blocks from the DB
+
      {
        "blocks": [
          {
@@ -51,10 +52,12 @@
        ]
      }
      ```
+
    - [GET] /blocks/:id (with all transactions hashs)
-     Description: Returns the block from the DB if it exist
-     Example response:
+
      ```
+     // Returns the block from the DB if it exist
+
      {
        "block_num": 1,
        "block_hash": "",
@@ -66,10 +69,13 @@
        ]
      }
      ```
+
    - [GET] /transaction/:txHash
-     Description: Returns the transaction from the DB if it exist. Logs will be fetched by the RPC once the corresponding field in DB is empty.
-     Example response:
+
      ```
+     // Returns the transaction from the DB if it exist.
+     // Logs will be fetched by the RPC once the corresponding field in DB is empty.
+
      {
        "tx_hash": "0x6666",
        "from": "0x4321",
