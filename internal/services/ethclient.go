@@ -14,7 +14,7 @@ import (
 )
 
 type EthClientService interface {
-	GetRecentBlockNum(ctx context.Context) (*uint64, error)
+	GetRecentBlockNum(ctx context.Context) (uint64, error)
 	GetBlock(ctx context.Context, blockNum uint64) (*models.Block, *[]models.Transaction, error)
 	GetTxnLogs(ctx context.Context, hash string) (*[]TxnReceiptLog, error)
 }
@@ -32,13 +32,13 @@ func NewEthClientService() (EthClientService, error) {
 	return &ethClientService{client: client}, nil
 }
 
-func (srv *ethClientService) GetRecentBlockNum(ctx context.Context) (*uint64, error) {
+func (srv *ethClientService) GetRecentBlockNum(ctx context.Context) (uint64, error) {
 	number, err := srv.client.BlockNumber(ctx)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
-	return &number, nil
+	return number, nil
 }
 
 func (srv *ethClientService) GetBlock(ctx context.Context, blockNum uint64) (*models.Block, *[]models.Transaction, error) {

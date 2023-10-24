@@ -17,12 +17,13 @@ var configInstance *Config
 
 // Config object
 type Config struct {
-	Database    *Database
-	Env         string
-	MaxN        int
-	MaxRoutines int
-	RpcList     []string
-	Server      *Server
+	Database                 *Database
+	Env                      string
+	MaxN                     int
+	MaxRoutines              int
+	RpcList                  []string
+	Server                   *Server
+	StartIndexingBlockNumber int
 }
 
 type Database struct {
@@ -59,6 +60,11 @@ func newConfig() (*Config, error) {
 		maxRoutines = 5
 	}
 
+	startIndexingBlockNumber, err := strconv.Atoi(os.Getenv("START_INDEXING_BLOCK_NUMBER"))
+	if err != nil || startIndexingBlockNumber < 0 {
+		startIndexingBlockNumber = 0
+	}
+
 	return &Config{
 		Database: &Database{
 			URL: os.Getenv("DB_URL"),
@@ -71,6 +77,7 @@ func newConfig() (*Config, error) {
 			Port: os.Getenv("SERVER_PORT"),
 			Cors: strings.Split(os.Getenv("CORS_ORIGIN_WHITELIST"), ","),
 		},
+		StartIndexingBlockNumber: startIndexingBlockNumber,
 	}, nil
 }
 
