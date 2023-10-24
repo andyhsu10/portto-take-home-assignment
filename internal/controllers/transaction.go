@@ -34,6 +34,7 @@ func NewTxnController() (TxnController, error) {
 // @produce application/json
 // @Router /transaction/{txHash} [get]
 // @Success 200 {object} services.TxnResponse
+// @Failure 404 "Transaction is not found in the DB"
 func (c *txnController) GetSingleTxn(ctx *gin.Context) {
 	txHash := ctx.Param("txHash")
 	txn, err := c.txnSrv.GetSingleTxn(ctx, txHash)

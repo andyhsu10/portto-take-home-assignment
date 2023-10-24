@@ -36,6 +36,7 @@ func NewBlockController() (BlockController, error) {
 // @produce application/json
 // @Router /blocks [get]
 // @Success 200 {object} services.BlocksResponse
+// @Failure 400 "Query parameter n is empty or invalid"
 func (c *blockController) GetBlocks(ctx *gin.Context) {
 	n, err := strconv.Atoi(ctx.Query("n"))
 	if err != nil {
@@ -63,6 +64,8 @@ func (c *blockController) GetBlocks(ctx *gin.Context) {
 // @produce application/json
 // @Router /blocks/{id} [get]
 // @Success 200 {object} services.SingleBlockResponse
+// @Failure 400 "Path parameter id is invalid"
+// @Failure 404 "Block is not found in the DB"
 func (c *blockController) GetSingleBlock(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {

@@ -57,7 +57,7 @@ func (srv *blockService) GetSingleBlock(ctx context.Context, blockNum int) (*Sin
 
 func (srv *blockService) GetLatestNBlocks(ctx context.Context, num int) (*BlocksResponse, error) {
 	blocks := make([]models.Block, 0)
-	res := srv.db.Limit(num).Find(&blocks)
+	res := srv.db.Limit(num).Order("number DESC").Find(&blocks)
 
 	if res.Error != nil {
 		return nil, res.Error

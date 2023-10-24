@@ -13,7 +13,7 @@ func InitBlockRouter(engine *gin.Engine, path string) error {
 	}
 	group := engine.Group(path)
 
-	group.GET("/", ctl.Block.GetBlocks)
+	group.GET("", ctl.Block.GetBlocks)
 	group.GET("/:id", ctl.Block.GetSingleBlock)
 	return nil
 }

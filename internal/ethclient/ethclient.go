@@ -8,7 +8,7 @@ import (
 	"eth-blockchain-service/internal/configs"
 )
 
-// set up a singleton instance of the database
+// set up a singleton instance of the ETH client
 var clientInstance *ethclient.Client
 
 func GetClient() (instance *ethclient.Client, err error) {

@@ -39,6 +39,9 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/services.BlocksResponse"
                         }
+                    },
+                    "400": {
+                        "description": "Query parameter n is empty or invalid"
                     }
                 }
             }
@@ -67,6 +70,12 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/services.SingleBlockResponse"
                         }
+                    },
+                    "400": {
+                        "description": "Path parameter id is invalid"
+                    },
+                    "404": {
+                        "description": "Block is not found in the DB"
                     }
                 }
             }
@@ -95,6 +104,9 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/services.TxnResponse"
                         }
+                    },
+                    "404": {
+                        "description": "Transaction is not found in the DB"
                     }
                 }
             }

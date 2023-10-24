@@ -7,8 +7,9 @@
 
 ## Getting Started
 
-1. Install dependencies: `go mod download`
-2. Copy `.env.example` to `.env` and fill in the values
+1. Clone the repo: `git clone git@github.com:andyhsu10/portto-take-home-assignment.git`
+2. Install dependencies: `go mod download`
+3. Copy `.env.example` to `.env` and fill in the values
    Example .env values:
 
    ```
@@ -22,18 +23,21 @@
    MAX_N="10000"
    RPC_LIST="https://data-seed-prebsc-2-s3.binance.org:8545/"
    SERVER_PORT="8080"
+   START_INDEX_BLOCK_NUMBER="34500000"
    ```
 
-3. Start the PostgreSQL DB (in detached mode): `docker compose up -d`
-4. Start the indexer service by: `go run ./cmd/indexer`
-5. Start the API service by: `go run ./cmd/server`
-6. To view the swagger UI, visit http://localhost:8080/swagger/index.html
+4. Start the PostgreSQL DB (in detached mode): `docker compose up -d`
+5. Start the indexer service by: `go run ./cmd/indexer`
+6. Open another terminal and start the API service by: `go run ./cmd/server`
+7. DB schema is located at: `/internal/models/model.go`
+8. To view the swagger UI, visit http://localhost:8080/swagger/index.html
 
 ## Requirements
 
 1. API service
 
    - [GET] /blocks?limit=n (without transaction hash)
+     Description: Returns the latest n blocks from the DB
      Example response:
      ```
      {
@@ -48,6 +52,7 @@
      }
      ```
    - [GET] /blocks/:id (with all transactions hashs)
+     Description: Returns the block from the DB if it exist
      Example response:
      ```
      {
@@ -62,6 +67,7 @@
      }
      ```
    - [GET] /transaction/:txHash
+     Description: Returns the transaction from the DB if it exist. Logs will be fetched by the RPC once the corresponding field in DB is empty.
      Example response:
      ```
      {

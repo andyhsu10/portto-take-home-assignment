@@ -13,5 +13,10 @@ func respond(ctx *gin.Context, err error, data interface{}, httpCode int) {
 		return
 	}
 
-	ctx.JSON(httpCode, data)
+	if data != nil {
+		ctx.JSON(httpCode, data)
+	} else {
+		ctx.Status(httpCode)
+	}
+
 }
