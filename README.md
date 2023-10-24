@@ -18,8 +18,8 @@
    DB_URL="postgres://admin:abcde12345@localhost:5432/ethereum"
    DB_USER="admin"
    ENV="develop"
+   INDEX_RATE_LIMIT="15"
    MAX_N="10000"
-   MAX_ROUTINES="5"
    RPC_LIST="https://data-seed-prebsc-2-s3.binance.org:8545/"
    SERVER_PORT="8080"
    ```

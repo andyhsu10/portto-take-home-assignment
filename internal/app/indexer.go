@@ -25,7 +25,7 @@ func Run() error {
 	// indexing old blocks
 	go func() {
 		defer wg.Done()
-		indexSrv.IndexOldBlocks(ctx, configs.GetConfig().StartIndexingBlockNumber, oldBlockNum)
+		indexSrv.IndexOldBlocks(ctx, configs.GetConfig().StartIndexBlockNumber, oldBlockNum)
 	}()
 
 	// indexing future new blocks

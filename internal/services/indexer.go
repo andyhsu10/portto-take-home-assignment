@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"errors"
+	"eth-blockchain-service/internal/configs"
 	"log"
 	"time"
 )
@@ -14,7 +15,7 @@ type IndexerService interface {
 }
 
 type indexerService struct {
-	RecentBlockNum uint64
+	recentBlockNum uint64
 	blockSrv       BlockService
 	txnSrv         TxnService
 	ethClientSrv   EthClientService
@@ -47,7 +48,7 @@ func NewIndexerService() (IndexerService, error) {
 	}
 
 	return &indexerService{
-		RecentBlockNum: number,
+		recentBlockNum: number,
 		blockSrv:       blockSrv,
 		txnSrv:         txnSrv,
 		ethClientSrv:   ethClientSrv,
@@ -55,12 +56,12 @@ func NewIndexerService() (IndexerService, error) {
 }
 
 func (srv *indexerService) IndexOldBlocks(ctx context.Context, begin int, block chan int) error {
-	if begin <= 0 || begin > int(srv.RecentBlockNum) {
+	if begin <= 0 || begin > int(srv.recentBlockNum) {
 		close(block)
 		return errors.New("begin number must be greater than zero or it is greater than the recent block number")
 	}
 
-	count := int(srv.RecentBlockNum) - begin + 1
+	count := int(srv.recentBlockNum) - begin + 1
 	chunkSize := 1000
 	iter := count/chunkSize + 1
 	for i := 0; i < iter; i++ {
@@ -69,7 +70,7 @@ func (srv *indexerService) IndexOldBlocks(ctx context.Context, begin int, block 
 		if i < iter-1 {
 			blocks = srv.makeRange(start, start+chunkSize-1)
 		} else {
-			blocks = srv.makeRange(start, int(srv.RecentBlockNum))
+			blocks = srv.makeRange(start, int(srv.recentBlockNum))
 		}
 
 		blocksInDb, err := srv.blockSrv.GetBlockNumbers(ctx, &blocks)
@@ -83,8 +84,7 @@ func (srv *indexerService) IndexOldBlocks(ctx context.Context, begin int, block 
 			blocksInDbMap[b] = true
 		}
 
-		const rateLimit = 10
-		ticker := time.NewTicker(time.Second / rateLimit)
+		ticker := time.NewTicker(time.Second / time.Duration(configs.GetConfig().IndexRateLimit))
 		for _, b := range blocks {
 			if _, ok := blocksInDbMap[b]; !ok {
 				err := srv.IndexOneBlock(ctx, uint64(b))
@@ -111,10 +111,9 @@ func (srv *indexerService) IndexNewBlocks(ctx context.Context, block chan int) e
 			continue
 		}
 
-		if num > srv.RecentBlockNum {
-			blocks := srv.makeRange(int(srv.RecentBlockNum)+1, int(num))
-			const rateLimit = 10
-			ticker := time.NewTicker(time.Second / rateLimit)
+		if num > srv.recentBlockNum {
+			blocks := srv.makeRange(int(srv.recentBlockNum)+1, int(num))
+			ticker := time.NewTicker(time.Second / time.Duration(configs.GetConfig().IndexRateLimit))
 
 			for _, b := range blocks {
 				err := srv.IndexOneBlock(ctx, uint64(b))
@@ -122,7 +121,7 @@ func (srv *indexerService) IndexNewBlocks(ctx context.Context, block chan int) e
 					break
 				}
 
-				srv.RecentBlockNum = uint64(b)
+				srv.recentBlockNum = uint64(b)
 				block <- b
 				<-ticker.C
 			}
